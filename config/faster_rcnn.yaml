@@ -1,0 +1,11 @@
+# Configuration for Faster R-CNN experiments
+
+model:
+  backbone: resnet50
+  num_classes: 2   # e.g. pedestrian + background
+
+training:
+  lr: 0.005
+  momentum: 0.9
+  weight_decay: 1e-4
+  epochs: 25

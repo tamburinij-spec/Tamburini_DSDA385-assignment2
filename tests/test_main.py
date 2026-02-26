@@ -5,21 +5,21 @@ import torch
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.models.model import create_model
-from src.config import DEVICE, MODEL_CONFIG
+from src.models.faster_rcnn import create_faster_rcnn
+from config import DEVICE, MODEL_CONFIG
 
 def test_model_creation():
     """Test that model can be created and run inference"""
     print("Testing model creation...")
-    model = create_model(num_classes=MODEL_CONFIG['num_classes'], device=DEVICE)
+    model = create_faster_rcnn(num_classes=MODEL_CONFIG['num_classes'], device=DEVICE)
+    model.eval()
     
-    # Create dummy input
-    dummy_input = torch.randn(2, 3, 224, 224).to(DEVICE)
+    # Forward pass on a single-image batch (Faster R-CNN expects a list)
+    dummy_input = [torch.randn(3, 224, 224).to(DEVICE)]
+    with torch.no_grad():
+        output = model(dummy_input)
     
-    # Forward pass
-    output = model(dummy_input)
-    
-    assert output.shape == (2, MODEL_CONFIG['num_classes']), f"Expected output shape (2, {MODEL_CONFIG['num_classes']}), got {output.shape}"
+    assert isinstance(output, list), "Faster R-CNN should return a list of detections"
     print("✓ Model creation test passed!")
 
 def test_device():

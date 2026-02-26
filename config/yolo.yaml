@@ -1,0 +1,10 @@
+# Configuration for YOLO experiments
+
+model:
+  version: 'v3'
+  num_classes: 2
+
+training:
+  lr: 0.001
+  batch_size: 16
+  epochs: 50

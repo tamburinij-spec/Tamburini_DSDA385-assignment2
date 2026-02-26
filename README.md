@@ -1,25 +1,87 @@
-# PyTorch Project
+# Tamburini DSDA385 Assignment 2
 
-This project is a template for developing machine learning applications using PyTorch. It includes a structured layout for organizing code, models, data handling, and utilities.
+This repository contains the code and data organization for the second assignment
+in the DSDA385 course. Currently the focus is on training a pedestrian detection
+model using the PennFudanPed dataset (via a Faster R-CNN implementation). The
+project has been refactored to follow a modular layout so that additional
+models/datasets can be added later.
 
-## Project Structure
+## Updated Structure
 
 ```
-pytorch-project
-├── src
-│   ├── main.py          # Entry point of the application
-│   ├── models           # Directory for model definitions
-│   │   └── __init__.py
-│   ├── data             # Directory for data loading and preprocessing
-│   │   └── __init__.py
-│   ├── utils            # Directory for utility functions
-│   │   └── __init__.py
-│   └── config.py       # Configuration settings
-├── tests                # Directory for unit tests
-│   └── test_main.py
-├── requirements.txt     # Project dependencies
-└── README.md            # Project documentation
+Tamburini_DSDA385-assignment2/
+│
+├── README.md
+├── requirements.txt
+├── config/
+│   ├── faster_rcnn.yaml
+│   ├── yolo.yaml
+│   └── dataset.yaml
+│
+├── data/
+│   ├── pennfudan/
+│   │   ├── train/
+│   │   │   ├── images/
+│   │   │   └── masks/
+│   │   ├── val/...
+│   │   └── test/...
+│   └── pets_subset/        # placeholder for later experiments
+│
+├── src/
+│   ├── datasets/
+│   │   ├── pennfudan.py
+│   │   └── pets.py
+│   │
+│   ├── models/
+│   │   ├── faster_rcnn.py
+│   │   └── yolo_wrapper.py
+│   │
+│   ├── engine/
+│   │   ├── train.py
+│   │   ├── evaluate.py
+│   │   └── metrics.py
+│   │
+│   ├── utils/
+│   │   ├── transforms.py
+│   │   ├── visualization.py
+│   │   └── device.py
+│   │
+│   └── main.py
+│
+├── experiments/
+│   ├── faster_rcnn_pennfudan/
+│   └── yolo_pets/
+│
+├── outputs/
+│   ├── checkpoints/
+│   ├── predictions/
+│   └── logs/
+│
+└── report/
+    └── assignment2_report.pdf
 ```
+
+## Setup Instructions
+
+1. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Prepare data**
+   - PennFudan dataset should be placed under `data/pennfudan`. Use the
+     `src/utils/organize_dataset.py` script to split and copy images if needed.
+
+3. **Run training**
+   ```bash
+   python src/main.py
+   ```
+
+## Notes
+
+- Configuration files are YAML and live under `config/`.
+- This repo currently supports a Faster R-CNN segmentation/detection model
+  trained on pedestrians; the structure is extensible to other models/datasets.
 
 ## Setup Instructions
 

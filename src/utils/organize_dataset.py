@@ -7,15 +7,12 @@ def organize_pennfudan_dataset():
     """Organize PennFudan dataset into train/val/test folders"""
     
     source_dir = Path(r"c:\Users\tamburinij\Downloads\PennFudanPed\PennFudanPed")
-    data_dir = Path("./data")
+    data_dir = Path("./data/pennfudan")
     
     # Create directory structure
-    (data_dir / "train" / "images").mkdir(parents=True, exist_ok=True)
-    (data_dir / "train" / "masks").mkdir(parents=True, exist_ok=True)
-    (data_dir / "val" / "images").mkdir(parents=True, exist_ok=True)
-    (data_dir / "val" / "masks").mkdir(parents=True, exist_ok=True)
-    (data_dir / "test" / "images").mkdir(parents=True, exist_ok=True)
-    (data_dir / "test" / "masks").mkdir(parents=True, exist_ok=True)
+    for split in ["train", "val", "test"]:
+        (data_dir / split / "images").mkdir(parents=True, exist_ok=True)
+        (data_dir / split / "masks").mkdir(parents=True, exist_ok=True)
     
     # Find images and masks directories
     images_dir = source_dir / "PNGImages"

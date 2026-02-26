@@ -1,0 +1,25 @@
+# Dataset and training configuration
+# This file is used by config/__init__.py to populate Python variables.
+
+device: cuda
+
+training:
+  batch_size: 4
+  learning_rate: 0.001
+  num_epochs: 15
+  weight_decay: 1e-5
+
+model:
+  num_classes: 10
+  input_channels: 3
+
+data:
+  data_dir: './data'
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+
+paths:
+  models_dir: './models'
+  logs_dir: './logs'
+  results_dir: './results'
