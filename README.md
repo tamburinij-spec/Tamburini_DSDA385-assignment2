@@ -148,7 +148,7 @@ python src/engine/compare_models.py
 
 | Model | Precision | Recall | F1-score | Mean IoU | mAP@0.5 |
 | --- | --- | --- | --- | --- | --- |
-| Faster R-CNN | 0.026 | 0.942 | 0.051 | 0.661 | -- |
+| Faster R-CNN | 0.026 | 0.942 | 0.051 | 0.661 | 0.661 |
 | YOLOv5n | 0.99944 | 0.995 | 0.99722 | 0.995 | 0.995 |
 | YOLOv8n | 0.99957 | 1 | 0.99728 | 0.995 | 0.995 |
 
