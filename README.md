@@ -1,6 +1,6 @@
 # DSDA385 – Assignment 2: Object Detection on Pet Dataset
 
-**Author:** [Your Name]  
+**Author:** Jacopo Tamburini  
 **Date:** March 2026  
 **GPU:** NVIDIA RTX 4060
 
