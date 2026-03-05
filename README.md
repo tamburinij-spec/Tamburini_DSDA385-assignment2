@@ -1,7 +1,7 @@
 # DSDA385 – Assignment 2: Object Detection on Pet Dataset
 
 **Author:** Jacopo Tamburini  
-**Date:** March 2026  
+**Date:** March 3 2026  
 **GPU:** NVIDIA RTX 4060
 
 ---
@@ -10,7 +10,7 @@
 
 Object detection is a fundamental computer vision task, aiming to locate and classify objects in images. Modern deep learning models, such as Faster R-CNN and YOLO, have shown high accuracy for detection tasks.  
 
-This assignment explores implementing, training, and evaluating multiple object detection models on a subset of the Oxford-IIIT Pet dataset. Specifically, the project trains and compares:
+This assignment explores implementing, training, and evaluating multiple object detection models on small computer vision datasets including the Penn-Fudan pedestrian dataset and the Oxford-IIIT Pet subset. Specifically, the project trains and compares:
 
 - **Faster R-CNN** (custom PyTorch implementation)  
 - **YOLOv5n** (Ultralytics)  
@@ -21,6 +21,23 @@ The goal is to evaluate model performance in terms of precision, recall, F1-scor
 ---
 
 ## 2. Dataset Description
+
+### Penn-Fudan Pedestrian Dataset
+
+The Penn-Fudan dataset contains images of pedestrians captured in
+urban street scenes.
+
+**Characteristics:**
+- ~170 images
+- Single class: pedestrian
+- Bounding box annotations included
+- Commonly used for small-scale object detection experiments
+
+This dataset is supported by the project pipeline but the primary
+experiments in this assignment were conducted on the Oxford-IIIT
+Pet subset.
+
+---
 
 ### Oxford-IIIT Pet Dataset (Subset)
 
@@ -79,7 +96,9 @@ Both models are trained using the same dataset split and bounding boxes extracte
 | Optimizer         | Adam  |
 | Device            | CUDA  |
 
-Training uses BCEWithLogitsLoss for segmentation masks, and Faster R-CNN internal losses for detection.
+Training uses the standard Torchvision Faster R-CNN detection losses,
+including classification loss, bounding box regression loss, and
+Region Proposal Network (RPN) losses.
 
 ### 4.2 YOLOv5n / YOLOv8n
 
@@ -152,7 +171,9 @@ python src/engine/compare_models.py
 | YOLOv5n | 0.99944 | 0.995 | 0.99722 | 0.995 | 0.995 |
 | YOLOv8n | 0.99957 | 1 | 0.99728 | 0.995 | 0.995 |
 
-> `[auto]` values are automatically saved in `outputs/model_comparison.csv`.
+The extremely high YOLO scores are likely due to the small dataset size
+and limited number of classes, which makes the detection task relatively
+easy after transfer learning.
 
 * * * * *
 
@@ -191,7 +212,7 @@ Prediction visualizations are saved in `outputs/predictions/`. Each image shows:
 
 * * * * *
 
-8\. Conclusion
+## 8. Conclusion
 --------------
 
 The project demonstrates training and evaluation of modern object detection models on a small dataset:
