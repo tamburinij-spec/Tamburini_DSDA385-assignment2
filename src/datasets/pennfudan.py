@@ -48,7 +48,7 @@ class PennFudanDataset(Dataset):
 
 
 
-def get_data_loaders(batch_size=32, num_workers=0):
+def get_data_loaders(batch_size=2, num_workers=0):
     """Return train/val/test DataLoader for PennFudan dataset."""
     transform = transforms.Compose([
         transforms.ToTensor(),

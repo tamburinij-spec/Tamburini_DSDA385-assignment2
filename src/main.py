@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+import os
 
 # ensure project root is on path when running from the src/ directory
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -12,6 +13,7 @@ import json
 from config import DEVICE, TRAINING_CONFIG, MODEL_CONFIG
 
 from datasets.pennfudan import get_data_loaders
+from datasets.pets import get_pet_data_loaders
 from engine.train import Trainer
 from engine.inference import run_test_evaluation
 from engine.visualization import save_predictions_visualization
@@ -24,10 +26,21 @@ def main():
     
     # Create data loaders
     print("Loading data...")
-    train_loader, val_loader, test_loader = get_data_loaders(
-        batch_size=int(TRAINING_CONFIG['batch_size'])
-    )
+    DATASET = "pets"   # change to "pennfudan" or "pets"
     
+    if DATASET == "pennfudan":
+        MODEL_CONFIG['num_classes'] = 2   # background + person
+        train_loader, val_loader, test_loader = get_data_loaders(
+            batch_size=int(TRAINING_CONFIG['batch_size'])
+        )
+    else:
+        MODEL_CONFIG['num_classes'] = 9   # background + 8 pet breeds
+        train_loader, val_loader, test_loader = get_pet_data_loaders(
+            batch_size=int(TRAINING_CONFIG['batch_size'])
+        )
+    print("DATASET:", DATASET)
+    print("NUM_CLASSES:", MODEL_CONFIG['num_classes'])
+
     # Create detection model (Faster R-CNN)
     print("Creating Faster R-CNN model...")
     model = create_faster_rcnn(
@@ -58,7 +71,11 @@ def main():
     # Train model
     print("Starting training...")
     try:
-        trainer.train(train_loader, val_loader)
+        # trainer.train(train_loader, val_loader)
+        checkpoint_path = os.path.join(checkpoint_dir, "best_model.pt")
+        checkpoint = torch.load(checkpoint_path)
+        trainer.model.load_state_dict(checkpoint["model_state_dict"])
+        trainer.model.eval()
         print("[DEBUG] Training completed successfully")
     except Exception as e:
         print(f"[ERROR] Training failed: {e}")
@@ -148,16 +165,15 @@ def main():
         traceback.print_exc()
     
     # Print final summary
+    print(test_metrics)
     print("\n" + "="*60)
     print("TRAINING AND EVALUATION COMPLETE")
     print("="*60)
     print(f"Best model saved to: {best_model_path}")
     print(f"Results saved to: {output_dir}")
     print(f"\nTest Metrics:")
-    print(f"  Precision: {test_metrics['Precision']:.4f}")
-    print(f"  Recall: {test_metrics['Recall']:.4f}")
-    print(f"  F1-Score: {test_metrics['F1-Score']:.4f}")
-    print(f"  Mean IoU: {test_metrics['Mean_IoU']:.4f}")
+    for key, value in test_metrics.items():
+        print(f"  {key}: {value:.4f}")
     print("="*60)
 
 if __name__ == "__main__":

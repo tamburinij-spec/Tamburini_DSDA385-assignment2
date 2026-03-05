@@ -8,33 +8,50 @@ import json
 from datetime import datetime
 
 
-def _masks_to_detection_targets(masks: torch.Tensor):
-    """Convert a batch of binary masks to Faster-RCNN target dicts.
-
-    Each mask is expected to be a float tensor in [0,1] shape (H,W) or
-    (1,H,W); we produce a single box around the foreground region and a
-    label of 1.  This is a quick hack for the PennFudan pedestrian data
-    where each image contains exactly one object.
+def _masks_to_detection_targets(masks_batch):
     """
-    targets = []
-    # masks come in (B,H,W) after dataset returns; ensure correct shape
-    if masks.ndim == 4 and masks.size(1) == 1:
-        masks = masks.squeeze(1)
+    Convert batch of segmentation masks to Faster R-CNN targets.
+    Accepts a tuple/list of masks.
+    """
 
-    for mask in masks:
-        mask = (mask > 0.5).float()
-        if mask.sum() == 0:
+    targets = []
+
+    for masks in masks_batch:
+        # Ensure masks is 3D (N,H,W) or 2D (H,W)
+        if masks.ndim == 4 and masks.size(1) == 1:
+            masks = masks.squeeze(1)
+
+        if masks.ndim == 2:
+            masks = masks.unsqueeze(0)
+
+        boxes = []
+        labels = []
+
+        for mask in masks:
+            pos = mask.nonzero(as_tuple=False)
+            if pos.numel() == 0:
+                continue
+
+            xmin = pos[:, 1].min()
+            xmax = pos[:, 1].max()
+            ymin = pos[:, 0].min()
+            ymax = pos[:, 0].max()
+
+            boxes.append([xmin, ymin, xmax, ymax])
+            labels.append(1)  # assuming single-class object
+
+        if len(boxes) == 0:
             boxes = torch.zeros((0, 4), dtype=torch.float32)
             labels = torch.zeros((0,), dtype=torch.int64)
         else:
-            ys, xs = torch.nonzero(mask, as_tuple=True)
-            xmin = xs.min().float()
-            ymin = ys.min().float()
-            xmax = xs.max().float()
-            ymax = ys.max().float()
-            boxes = torch.stack([xmin, ymin, xmax, ymax]).unsqueeze(0)
-            labels = torch.ones((1,), dtype=torch.int64)
-        targets.append({"boxes": boxes, "labels": labels})
+            boxes = torch.tensor(boxes, dtype=torch.float32)
+            labels = torch.tensor(labels, dtype=torch.int64)
+
+        targets.append({
+            "boxes": boxes,
+            "labels": labels,
+        })
+
     return targets
 
 
@@ -61,28 +78,27 @@ class Trainer:
         is_first_batch = True
 
         progress_bar = tqdm(train_loader, desc="Training")
-        for images, masks in progress_bar:
-            images = images.to(self.device)
-            masks = masks.to(self.device)
-
-            # Try detection model path (expects targets, returns dict)
-            try:
+        for images, second in progress_bar:
+            images = [img.to(self.device) for img in images]
+            if isinstance(second, torch.Tensor):
+                masks = second.to(self.device)
                 targets = _masks_to_detection_targets(masks)
-                is_first_batch = False
+
                 for t in targets:
                     t["boxes"] = t["boxes"].to(self.device)
                     t["labels"] = t["labels"].to(self.device)
-                output = self.model(images, targets)
-                # if output is dict, it's a detection model loss dict
-                if isinstance(output, dict):
-                    loss = sum(v for v in output.values())
-                else:
-                    # fallback: shouldn't happen but treat as segmentation
-                    loss = self.criterion(output, masks.unsqueeze(1))
-            except (TypeError, RuntimeError, AssertionError):
-                # Model doesn't accept targets (segmentation model) or other errors
-                outputs = self.model(images)
-                loss = self.criterion(outputs, masks.unsqueeze(1))
+
+                loss_dict = self.model(images, targets)
+                loss = sum(v for v in loss_dict.values())
+
+            else:
+                targets = [
+                    {k: v.to(self.device) for k, v in t.items()}
+                    for t in second
+                ]
+
+                loss_dict = self.model(images, targets)
+                loss = sum(v for v in loss_dict.values())
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -95,37 +111,30 @@ class Trainer:
         return epoch_loss
 
     def evaluate(self, val_loader):
-        self.model.eval()
+        self.model.train()   # 🔥 Important for detection loss
+
         total_loss = 0.0
         batch_count = 0
 
-        with torch.no_grad():
-            for images, masks in val_loader:
-                images = images.to(self.device)
-                masks = masks.to(self.device)
+        for images, targets in val_loader:
+            images = [img.to(self.device) for img in images]
 
-                # Try detection path first
-                try:
-                    targets = _masks_to_detection_targets(masks)
-                    for t in targets:
-                        t["boxes"] = t["boxes"].to(self.device)
-                        t["labels"] = t["labels"].to(self.device)
-                    output = self.model(images, targets)
-                    # In eval mode, detection models return predictions list, not losses
-                    if isinstance(output, dict):
-                        loss = sum(v for v in output.values())
-                        total_loss += loss.item()
-                    # else: predictions list, skip (can't compute scalar loss)
-                except (TypeError, RuntimeError, AssertionError):
-                    # Fallback to segmentation path
-                    outputs = self.model(images)
-                    loss = self.criterion(outputs, masks.unsqueeze(1))
-                    total_loss += loss.item()
+            for t in targets:
+                t["boxes"] = t["boxes"].to(self.device)
+                t["labels"] = t["labels"].to(self.device)
 
-                batch_count += 1
+            with torch.no_grad():
+                loss_dict = self.model(images, targets)
+                loss = sum(v for v in loss_dict.values())
 
-        avg_loss = total_loss / batch_count if batch_count > 0 else 0.0
-        return avg_loss
+            total_loss += loss.item()
+            batch_count += 1
+
+        epoch_loss = total_loss / batch_count
+
+        self.model.eval()  # switch back
+
+        return epoch_loss
 
     def _save_checkpoint(self, epoch, train_loss, val_loss):
         """Save model checkpoint if validation loss improves."""

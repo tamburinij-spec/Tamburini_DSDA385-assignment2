@@ -70,11 +70,11 @@ def save_predictions_visualization(model, test_loader, device, output_dir='outpu
     print("Generating prediction visualizations...")
     with torch.no_grad():
         for images, masks in tqdm(test_loader, desc="Visualizing"):
-            batch_images = images.to(device)
+            batch_images = [img.to(device) for img in images]
             predictions = model(batch_images)
             
             # Convert images back to numpy
-            images_np = images.cpu().numpy()
+            images_np = [img.cpu().numpy() for img in images]
             
             for img_idx, pred in enumerate(predictions):
                 if img_idx >= len(images_np):
