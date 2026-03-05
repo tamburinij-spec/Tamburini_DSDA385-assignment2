@@ -37,8 +37,6 @@ This dataset is supported by the project pipeline but the primary
 experiments in this assignment were conducted on the Oxford-IIIT
 Pet subset.
 
----
-
 ### Oxford-IIIT Pet Dataset (Subset)
 
 The dataset contains images of cats and dogs across multiple breeds. For this assignment, a small subset of 8 breeds was used for feasibility on a single GPU.
